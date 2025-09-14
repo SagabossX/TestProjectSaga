@@ -8,12 +8,15 @@ public class ScoreManager : MonoBehaviour
     [SerializeField] private int maxTurns = 20;
     [SerializeField] private int matchPoints = 10;
     [SerializeField] private int mismatchPenalty = 2;
+    [SerializeField] private int comboBonus = 5; 
 
     private int turnsRemaining;
     private int score;
+    private int comboCount; 
 
     public int TurnsRemaining => turnsRemaining;
     public int Score => score;
+    public int ComboCount => comboCount;
 
     private void Awake()
     {
@@ -29,36 +32,43 @@ public class ScoreManager : MonoBehaviour
 
     private void Start()
     {
-        // Only reset if no save is loaded
         if (turnsRemaining == 0 && score == 0)
             ResetScore();
+        else
+            UpdateUI();
     }
 
     public void ResetScore()
     {
         turnsRemaining = maxTurns;
         score = 0;
-        UIManager.Instance.UpdateScore(score);
-        UIManager.Instance.UpdateTurns(turnsRemaining);
+        comboCount = 0;
+        UpdateUI();
     }
 
     public void AddMatchPoints()
     {
-        score += matchPoints;
-        UIManager.Instance.UpdateScore(score);
+        comboCount++;
+
+        int totalPoints = matchPoints + (comboCount - 1) * comboBonus;
+        score += totalPoints;
+
+        UpdateUI();
     }
 
     public void AddMismatchPenalty()
     {
         score -= mismatchPenalty;
         if (score < 0) score = 0;
-        UIManager.Instance.UpdateScore(score);
+
+        comboCount = 0; 
+        UpdateUI();
     }
 
     public void UseTurn()
     {
         turnsRemaining--;
-        UIManager.Instance.UpdateTurns(turnsRemaining);
+        UpdateUI();
     }
 
     public bool IsOutOfTurns()
@@ -66,11 +76,23 @@ public class ScoreManager : MonoBehaviour
         return turnsRemaining <= 0;
     }
 
-    public void LoadState(int savedScore, int savedTurns)
+    public void LoadState(int savedScore, int savedTurns, int savedCombo = 0)
     {
         score = savedScore;
-        turnsRemaining = savedTurns > 0 ? savedTurns : maxTurns; // fallback if old saves
+        turnsRemaining = savedTurns > 0 ? savedTurns : maxTurns;
+        comboCount = savedCombo;
+        UpdateUI();
+    }
+
+    public (int score, int turns, int combo) GetState()
+    {
+        return (score, turnsRemaining, comboCount);
+    }
+
+    private void UpdateUI()
+    {
         UIManager.Instance.UpdateScore(score);
         UIManager.Instance.UpdateTurns(turnsRemaining);
+        UIManager.Instance.UpdateCombo(comboCount);
     }
 }

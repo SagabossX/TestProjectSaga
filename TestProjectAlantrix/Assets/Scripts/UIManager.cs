@@ -9,6 +9,8 @@ public class UIManager : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private TMP_Text scoreText;
     [SerializeField] private TMP_Text turnsText;
+    [SerializeField] private TMP_Text comboText;
+    [SerializeField] private TMP_Text finalScoreText;
     [SerializeField] private GameObject winPanel;
     [SerializeField] private GameObject gameOverPanel;
 
@@ -29,6 +31,9 @@ public class UIManager : MonoBehaviour
         HideAllPanels();
         UpdateScore(0);
         UpdateTurns(ScoreManager.Instance.TurnsRemaining);
+        UpdateCombo(0);
+        if (finalScoreText != null)
+            finalScoreText.gameObject.SetActive(false);
     }
 
     public void UpdateScore(int score)
@@ -43,21 +48,49 @@ public class UIManager : MonoBehaviour
             turnsText.text = "Turns: " + turnsRemaining;
     }
 
+    public void UpdateCombo(int combo)
+    {
+        if (comboText != null)
+        {
+            if (combo > 1)
+            {
+                comboText.gameObject.SetActive(true);
+                comboText.text = "Combo x" + combo;
+            }
+            else
+            {
+                comboText.gameObject.SetActive(false);
+            }
+        }
+    }
+
     public void ShowWinPanel()
     {
         HideAllPanels();
         if (winPanel != null) winPanel.SetActive(true);
+        ShowFinalScore();
     }
 
     public void ShowGameOverPanel()
     {
         HideAllPanels();
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
+        ShowFinalScore();
+    }
+
+    private void ShowFinalScore()
+    {
+        if (finalScoreText != null)
+        {
+            finalScoreText.gameObject.SetActive(true);
+            finalScoreText.text = "Final Score: " + ScoreManager.Instance.Score;
+        }
     }
 
     private void HideAllPanels()
     {
         if (winPanel != null) winPanel.SetActive(false);
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        if (finalScoreText != null) finalScoreText.gameObject.SetActive(false);
     }
 }
