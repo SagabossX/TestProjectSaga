@@ -29,8 +29,16 @@ public class GameManager : MonoBehaviour
     }
 
     private void Start() 
-    { 
-        SetupGame(); 
+    {
+        GameSaveData saveData = SaveHandler.LoadGame();
+        if (saveData == null)
+        {
+            SetupGame(); // new game if no save
+            return;
+        }
+
+        gridSpawner.SpawnGridFromSave(saveData, cardDataSet);
+        activeCards = gridSpawner.spawnedCards;
     }
 
     private void SetupGame() 
@@ -83,6 +91,8 @@ public class GameManager : MonoBehaviour
 
         card.Reveal();
 
+        SoundManager.Instance.PlayFlip();
+
         if (firstSelected == null)
         {
             firstSelected = card;
@@ -104,12 +114,19 @@ public class GameManager : MonoBehaviour
         {
             first.MarkAsMatched();
             second.MarkAsMatched();
+
+            SoundManager.Instance.PlayMatch();
+
+            SaveHandler.SaveGame(activeCards);   //Save game after matching cards
+
             CheckWinCondition();
         }
         else
         {
             first.Hide();
             second.Hide();
+
+            SoundManager.Instance.PlayMismatch();
         }
     }
 
@@ -118,6 +135,9 @@ public class GameManager : MonoBehaviour
         foreach (var card in activeCards)
             if (!card.IsMatched) return;
 
+        SaveHandler.DeleteSave();
+
         Debug.Log("You Won!");
+        SoundManager.Instance.PlayWin();
     }
 }

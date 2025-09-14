@@ -6,8 +6,8 @@ using System.Collections;
 public class Card : MonoBehaviour, IPointerClickHandler
 {
     [Header("References")]
-    [SerializeField] private Image frontImage;        
-    [SerializeField] private GameObject frontImageBG;  
+    [SerializeField] private Image frontImage;
+    [SerializeField] private GameObject frontImageBG;
     [SerializeField] private Image backImage;
 
     [Header("Animation")]
@@ -20,12 +20,38 @@ public class Card : MonoBehaviour, IPointerClickHandler
 
     public string Id => data.Id;
     public bool IsMatched => isMatched;
+    public bool IsRevealed => isRevealed;
 
     public void Initialize(CardData cardData)
     {
         data = cardData;
         frontImage.sprite = data.FrontSprite;
         FlipDownInstant();
+        isMatched = false;
+    }
+
+    public void Initialize(CardData cardData, CardSaveData saveData)
+    {
+        data = cardData;
+        frontImage.sprite = data.FrontSprite;
+
+        isMatched = saveData.isMatched;
+        isRevealed = saveData.isRevealed;
+
+        if (isMatched)
+        {
+            frontImageBG.SetActive(true);
+            backImage.gameObject.SetActive(false);
+        }
+        else if (isRevealed)
+        {
+            frontImageBG.SetActive(true);
+            backImage.gameObject.SetActive(false);
+        }
+        else
+        {
+            FlipDownInstant();
+        }
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -51,7 +77,9 @@ public class Card : MonoBehaviour, IPointerClickHandler
     public void MarkAsMatched()
     {
         isMatched = true;
-        Reveal(); // stay revealed
+        isRevealed = true; // ensure revealed flag is correct
+        frontImageBG.SetActive(true);
+        backImage.gameObject.SetActive(false);
     }
 
     private void FlipDownInstant()
