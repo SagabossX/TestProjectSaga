@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
+using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
@@ -39,6 +40,8 @@ public class GameManager : MonoBehaviour
 
         gridSpawner.SpawnGridFromSave(saveData, cardDataSet);
         activeCards = gridSpawner.spawnedCards;
+
+        ScoreManager.Instance.LoadState(saveData.score, saveData.turnsRemaining);
     }
 
     private void SetupGame() 
@@ -110,6 +113,9 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSeconds(checkDelay);
 
+        // Every pair attempt consumes a turn
+        ScoreManager.Instance.UseTurn();
+
         if (first.Id == second.Id)
         {
             first.MarkAsMatched();
@@ -117,9 +123,8 @@ public class GameManager : MonoBehaviour
 
             SoundManager.Instance.PlayMatch();
 
-            SaveHandler.SaveGame(activeCards);   //Save game after matching cards
+            ScoreManager.Instance.AddMatchPoints();
 
-            CheckWinCondition();
         }
         else
         {
@@ -127,8 +132,30 @@ public class GameManager : MonoBehaviour
             second.Hide();
 
             SoundManager.Instance.PlayMismatch();
+
+            ScoreManager.Instance.AddMismatchPenalty();
         }
+
+        // check if out of turns
+        if (ScoreManager.Instance.IsOutOfTurns())
+        {
+            CheckLoseCondition();
+        }
+
+        SaveHandler.SaveGame(activeCards, ScoreManager.Instance.Score, ScoreManager.Instance.TurnsRemaining);
+        
+        CheckWinCondition();
+
     }
+
+    private void CheckLoseCondition()
+    {
+        SaveHandler.DeleteSave();
+        SoundManager.Instance.PlayGameOver();
+        UIManager.Instance.ShowGameOverPanel();
+        Debug.Log("Game Over!");
+    }
+
 
     private void CheckWinCondition()
     {
@@ -136,8 +163,14 @@ public class GameManager : MonoBehaviour
             if (!card.IsMatched) return;
 
         SaveHandler.DeleteSave();
-
-        Debug.Log("You Won!");
         SoundManager.Instance.PlayWin();
+        UIManager.Instance.ShowWinPanel();
+        Debug.Log("You Won!");
+    }
+
+    public void RestartGame()
+    {
+        SaveHandler.DeleteSave();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

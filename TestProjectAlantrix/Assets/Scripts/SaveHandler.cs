@@ -7,18 +7,20 @@ public static class SaveHandler
     private static readonly string saveFilePath =
         Path.Combine(Application.persistentDataPath, "save.json");
 
-    public static void SaveGame(List<Card> activeCards)
+    public static void SaveGame(List<Card> activeCards, int score, int turnsRemaining)
     {
-        GameSaveData saveData = new GameSaveData();
+        GameSaveData saveData = new GameSaveData
+        {
+            score = score,
+            turnsRemaining = turnsRemaining
+        };
 
         foreach (Card card in activeCards)
         {
-            bool saveAsRevealed = card.IsMatched || card.IsRevealed;
-            // only save revealed if matched (or you really want to keep it mid-turn)
-
             saveData.cards.Add(new CardSaveData
             {
                 id = card.Id,
+                // only keep revealed state if it’s matched
                 isRevealed = card.IsMatched ? card.IsRevealed : false,
                 isMatched = card.IsMatched
             });
@@ -27,7 +29,6 @@ public static class SaveHandler
         string json = JsonUtility.ToJson(saveData, true);
         File.WriteAllText(saveFilePath, json);
     }
-
 
     public static GameSaveData LoadGame()
     {
@@ -56,9 +57,9 @@ public static class SaveHandler
 [System.Serializable]
 public class CardSaveData
 {
-    public string id;    
-    public bool isRevealed;
+    public string id;
     public bool isMatched;
+    public bool isRevealed;
 }
 
 
@@ -66,4 +67,6 @@ public class CardSaveData
 public class GameSaveData
 {
     public List<CardSaveData> cards = new();
+    public int score;
+    public int turnsRemaining;
 }
